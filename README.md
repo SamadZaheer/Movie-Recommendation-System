@@ -29,7 +29,7 @@ The following workflow outlines the key steps in the project:
 - `Movie Recommendation System.ipynb` → Complete preprocessing, vectorization, and recommendation implementation  
 - `tmdb_5000_movies.csv` → Movie metadata dataset  
 - `tmdb_5000_credits.csv` → Cast and crew dataset  
-- `ratings_small.csv` → User ratings dataset (for future collaborative filtering)  
+- `ratings_small.csv` → User ratings dataset (used for exploratory collaborative filtering experiments)
 - `README.md` → Project documentation  
 - `images/` → Diagrams and charts used in documentation  
 
@@ -50,17 +50,17 @@ The following workflow outlines the key steps in the project:
 
 The project combines **movies** and **credits** datasets.
 
-<p align="center">
-  <img src="images/genre_distribution.png" alt="Genre Distribution" width="600"/>
-</p>
-
 EDA included:
 
 - Checking for missing values and removing null entries  
 - Converting JSON-like strings into Python objects  
 - Extracting top 3 cast members and director  
 - Cleaning and lowercasing text data  
-- Combining genres, keywords, cast, director, and overview into a single **"tags"** column  
+- Combining genres, keywords, cast, director, and overview into a single **"tags"** column
+
+<p align="center">
+  <img src="images/genre_distribution.png" alt="Genre Distribution" width="600"/>
+</p>
 
 ---
 
@@ -89,23 +89,19 @@ This generates a similarity matrix between all movies in the dataset.
 
 ## Recommendation System
 
-A recommendation function was created:
-
-```python
-def recommend(movie_name):
-```
+A recommendation function was implemented to return the top 10 most similar movies based on cosine similarity.
 
 ### How it works
 
 - Finds the selected movie index  
 - Retrieves similarity scores  
 - Sorts movies by similarity  
-- Returns the top 5 most similar movies  
+- Returns the top 10 most similar movies  
 
 ### Example
 
 ```python
-recommend("Avatar")
+get_recommendations("Avatar")
 ```
 
 **Example Output:**
@@ -127,6 +123,31 @@ recommend("Avatar")
 Since this is a recommendation system, traditional regression metrics like MAE or R² are not applicable.  
 Performance is evaluated based on semantic similarity and recommendation relevance.
 
+---
+
+## Exploratory Collaborative Filtering (SVD)
+
+In addition to content-based filtering, an exploratory implementation of **Collaborative Filtering** was performed using the **Surprise** library.
+
+### Approach Used
+
+- **Algorithm:** Singular Value Decomposition (SVD)  
+- **Method:** Matrix Factorization  
+- **Evaluation Metrics:** RMSE and MAE  
+- **Dataset:** `ratings_small.csv`  
+
+The model learns **latent features** of users and movies to predict ratings:
+
+```python
+algo.predict(user_id, movie_id)
+```
+### Key Insights
+
+-  Unlike content-based filtering, collaborative filtering uses user behavior data
+- It enables personalized predictions
+- It was evaluated experimentally but not integrated into the final recommendation function
+- This exploratory step demonstrates how collaborative filtering differs from similarity-based approaches
+  
 ---
 
 ## Interpretation & Key Findings
@@ -157,9 +178,10 @@ Performance is evaluated based on semantic similarity and recommendation relevan
 
 ## Future Improvements
 
-- Implement **Collaborative Filtering** using `ratings_small.csv`  
+- Integrate collaborative filtering (SVD) into a hybrid recommendation system 
 - Build a **Hybrid Recommendation System**  
 - Replace CountVectorizer with **TF-IDF**  
 - Use deep learning embeddings (Word2Vec / BERT)  
 - Deploy using **Streamlit** or **Flask**  
 - Integrate TMDB API to display movie posters and details  
+
