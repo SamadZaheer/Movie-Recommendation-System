@@ -185,3 +185,11 @@ algo.predict(user_id, movie_id)
 - Deploy using **Streamlit** or **Flask**  
 - Integrate TMDB API to display movie posters and details  
 
+---
+
+## Author
+
+### Samad Zaheer
+
+Master of Information Technology (Data Science)  
+Queensland University of Technology (QUT)
