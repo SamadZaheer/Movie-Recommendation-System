@@ -1,22 +1,53 @@
 # Movie Recommendation System
 
-This project builds a **Content-Based Movie Recommendation System** that recommends movies similar to a selected movie based on genres, keywords, cast, director, and overview.  
-
-Using Natural Language Processing (NLP) and Cosine Similarity, the system demonstrates how similarity-based recommendation engines work in real-world applications.
+Content-based movie recommendation engine using NLP and cosine similarity on the TMDB 5,000 dataset, with exploratory collaborative filtering via SVD matrix factorisation.
 
 ---
 
-## Project Workflow
+## Project Overview
 
-The following workflow outlines the key steps in the project:
+Recommendation engines power Netflix, Spotify, and Amazon — but how do they actually work? This project builds a content-based movie recommender from scratch, encoding each film as a feature vector derived from its genres, cast, director, and plot keywords, then using cosine similarity to surface the most thematically related titles.
 
-- Load movie and credits datasets  
-- Merge datasets  
-- Perform data cleaning and preprocessing  
-- Feature engineering (combine text features into a single column)  
-- Text vectorization using CountVectorizer  
-- Compute Cosine Similarity  
-- Build recommendation function  
+The system correctly identifies thematic relationships between films: querying "Avatar" returns Guardians of the Galaxy, Star Trek, and John Carter — demonstrating that the model has learned genuine semantic relationships, not just surface-level genre matches.
+
+Collaborative filtering via SVD matrix factorisation is also explored as a complementary approach.
+
+---
+
+## Dataset
+
+| File | Source | Description |
+|------|--------|-------------|
+| `tmdb_5000_movies.csv` | TMDB / Kaggle | Metadata for 5,000 films: genres, keywords, overview, runtime, vote data |
+| `tmdb_5000_credits.csv` | TMDB / Kaggle | Cast and crew information per film |
+| `ratings_small.csv` | MovieLens | User ratings (used for exploratory collaborative filtering only) |
+
+---
+
+## Approach
+
+1. **Data loading & merging** — merged `tmdb_5000_movies.csv` and `tmdb_5000_credits.csv` on movie ID
+2. **Preprocessing** — checked for missing values; removed null entries; converted JSON-like string columns (`genres`, `keywords`, `cast`, `crew`) into Python objects using `ast.literal_eval`
+3. **Feature engineering** — extracted top 3 cast members and director; combined genres, keywords, cast, director, and plot overview into a single `tags` column per film; lowercased and stripped spaces for consistent vectorisation
+
+<p align="center">
+  <img src="images/genre_distribution.png" alt="Genre Distribution" width="600"/>
+</p>
+
+4. **Text vectorisation** — applied `CountVectorizer` with `max_features=5000` and English stop words to convert `tags` into sparse feature vectors
+5. **Cosine similarity** — computed a full similarity matrix across all 5,000 films; cosine similarity measures the angle between vectors (1 = identical, 0 = unrelated)
+6. **Recommendation function** — finds the queried film by title, retrieves its similarity scores, sorts all films by score descending, returns the top 10 most similar titles
+
+```python
+get_recommendations("Avatar")
+# → Guardians of the Galaxy, Star Trek, John Carter, Aliens vs Predator, Titan A.E., ...
+```
+
+<p align="center">
+  <img src="images/recommendation_example.png" alt="Recommendation Example" width="800"/>
+</p>
+
+7. **Exploratory collaborative filtering** — implemented SVD matrix factorisation using the `Surprise` library on `ratings_small.csv`; evaluated with RMSE and MAE; explored as a complementary personalisation approach (not integrated into the final recommender)
 
 <p align="center">
   <img src="images/workflow.png" alt="Project Workflow" width="700"/>
@@ -24,172 +55,36 @@ The following workflow outlines the key steps in the project:
 
 ---
 
-## Files in the Repository
+## Key Findings
 
-- `Movie Recommendation System.ipynb` → Complete preprocessing, vectorization, and recommendation implementation  
-- `tmdb_5000_movies.csv` → Movie metadata dataset  
-- `tmdb_5000_credits.csv` → Cast and crew dataset  
-- `ratings_small.csv` → User ratings dataset (used for exploratory collaborative filtering experiments)
-- `README.md` → Project documentation  
-- `images/` → Diagrams and charts used in documentation  
+- **Content-based filtering successfully captures thematic relationships** — "Avatar" → Guardians of the Galaxy, Star Trek; the system has learned genre, cast, and narrative similarities
+- **Director and cast are the most discriminating features** for consistent genre-level recommendations; plot keywords add specificity
+- **SVD collaborative filtering requires dense rating matrices** to perform well — the sparse user-film matrix in `ratings_small.csv` leads to cold-start limitations for less-rated films
+- **Content-based approaches scale well** and require no user history, making them well-suited for new platform users or cold-start scenarios
+- **Combining content signals with collaborative signals** (hybrid systems) would yield more personalised results — content-based provides a strong, interpretable baseline
 
----
+**Content-based vs Collaborative — key differences:**
 
-## Tech Stack
-
-- **Language**: Python  
-- **Libraries Used**:
-  - `numpy`, `pandas` → Data manipulation  
-  - `matplotlib`, `seaborn` → Visualization  
-  - `scikit-learn` → Vectorization & similarity computation  
-  - `nltk` (optional) → Text preprocessing  
+| Approach | Data Required | Personalisation | Cold Start |
+|----------|--------------|-----------------|------------|
+| Content-based (this project) | Film metadata | None (same for all users) | Handles well |
+| Collaborative (SVD, exploratory) | User rating history | Yes | Struggles |
 
 ---
 
-## Exploratory Data Analysis
+## How to Run
 
-The project combines **movies** and **credits** datasets.
-
-EDA included:
-
-- Checking for missing values and removing null entries  
-- Converting JSON-like strings into Python objects  
-- Extracting top 3 cast members and director  
-- Cleaning and lowercasing text data  
-- Combining genres, keywords, cast, director, and overview into a single **"tags"** column
-
-<p align="center">
-  <img src="images/genre_distribution.png" alt="Genre Distribution" width="600"/>
-</p>
-
----
-
-## Model Building & Similarity Computation
-
-Unlike regression problems, this project does not train a predictive model.  
-Instead, it uses vector similarity techniques.
-
-### Text Vectorization
-
-- **CountVectorizer (max_features=5000, stop_words='english')**
-
-### Similarity Measure
-
-- **Cosine Similarity**
-
-Cosine similarity measures the angle between two vectors:
-
-- `1` → Very similar  
-- `0` → Not similar  
-- `-1` → Opposite  
-
-This generates a similarity matrix between all movies in the dataset.
-
----
-
-## Recommendation System
-
-A recommendation function was implemented to return the top 10 most similar movies based on cosine similarity.
-
-### How it works
-
-- Finds the selected movie index  
-- Retrieves similarity scores  
-- Sorts movies by similarity  
-- Returns the top 10 most similar movies  
-
-### Example
-
-```python
-get_recommendations("Avatar")
+```bash
+git clone https://github.com/SamadZaheer/Movie-Recommendation-System.git
+cd Movie-Recommendation-System
+pip install -r requirements.txt
+jupyter notebook "Movie Recommendation System.ipynb"
 ```
 
-**Example Output:**
-
-- Guardians of the Galaxy  
-- Star Trek  
-- John Carter  
-- Aliens vs Predator  
-- Titan A.E.  
-
----
-
-## Results
-
-<p align="center">
-  <img src="images/recommendation_example.png" alt="Recommendation Example" width="800"/>
-</p>
-
-Since this is a recommendation system, traditional regression metrics like MAE or R² are not applicable.  
-Performance is evaluated based on semantic similarity and recommendation relevance.
-
----
-
-## Exploratory Collaborative Filtering (SVD)
-
-In addition to content-based filtering, an exploratory implementation of **Collaborative Filtering** was performed using the **Surprise** library.
-
-### Approach Used
-
-- **Algorithm:** Singular Value Decomposition (SVD)  
-- **Method:** Matrix Factorization  
-- **Evaluation Metrics:** RMSE and MAE  
-- **Dataset:** `ratings_small.csv`  
-
-The model learns **latent features** of users and movies to predict ratings:
-
-```python
-algo.predict(user_id, movie_id)
-```
-### Key Insights
-
--  Unlike content-based filtering, collaborative filtering uses user behavior data
-- It enables personalized predictions
-- It was evaluated experimentally but not integrated into the final recommendation function
-- This exploratory step demonstrates how collaborative filtering differs from similarity-based approaches
-  
----
-
-## Interpretation & Key Findings
-
-### How similarity works
-
-- Movies sharing genres, cast, director, or similar descriptions receive higher similarity scores  
-- The system effectively captures thematic relationships between films  
-
-### Strengths
-
-- Works without user rating history  
-- Fast similarity computation once matrix is built  
-- Easy to scale to larger datasets  
-
-### Limitations
-
-- No personalization (same recommendation for all users)  
-- Does not use user behavior data  
-- Suffers from cold-start problem for new entries  
-
-### Practical takeaway
-
-- Content-based filtering is a strong baseline recommendation approach  
-- For better personalization, hybrid systems combining collaborative filtering should be implemented  
-
----
-
-## Future Improvements
-
-- Integrate collaborative filtering (SVD) into a hybrid recommendation system 
-- Build a **Hybrid Recommendation System**  
-- Replace CountVectorizer with **TF-IDF**  
-- Use deep learning embeddings (Word2Vec / BERT)  
-- Deploy using **Streamlit** or **Flask**  
-- Integrate TMDB API to display movie posters and details  
+> The TMDB dataset files (`tmdb_5000_movies.csv`, `tmdb_5000_credits.csv`) are included in the repository. `ratings_small.csv` is used only for the exploratory collaborative filtering section.
 
 ---
 
 ## Author
 
-### Samad Zaheer
-
-Master of Information Technology (Data Science)  
-Queensland University of Technology (QUT)
+**Samad Zaheer** — Master of Information Technology (Data Science), Queensland University of Technology (QUT)
